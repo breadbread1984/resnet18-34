@@ -38,16 +38,16 @@ def ResNet18(**kwargs):
 def ImageNetRN18():
   inputs = tf.keras.Input((None, None, 3));
   results = ResNet18(name = 'resnet18')(inputs);
-  results = tf.keras.layers.Dense(num_classes, activation = tf.keras.activations.softmax)(results);
+  results = tf.keras.layers.Dense(1000, activation = tf.keras.activations.softmax)(results);
   return tf.keras.Model(inputs = inputs, outputs = results);
 
-def ResNet34():
+def ResNet34(**kwargs):
   inputs = tf.keras.Input((None, None, 3));
   results = tf.keras.layers.Conv2D(64, kernel_size = (7,7), strides = (2,2), padding = 'same', kernel_initializer = tf.keras.initializers.HeNormal())(inputs);
   results = tf.keras.layers.BatchNormalization()(results);
   results = tf.keras.layers.ReLU()(results);
   results = tf.keras.layers.MaxPool2D(pool_size = (3,3), strides = (2,2), padding = 'same')(results);
-    results = ResnetBlock(64, 64)(results);
+  results = ResnetBlock(64, 64)(results);
   results = ResnetBlock(64, 64)(results);
   results = ResnetBlock(64, 64)(results);
   results = ResnetBlock(64, 128, down_sample = True)(results);
@@ -69,7 +69,7 @@ def ResNet34():
 def ImageNetRN34():
   inputs = tf.keras.Input((None, None, 3));
   results = ResNet34(name = 'resnet34')(inputs);
-  results = tf.keras.layers.Dense(num_classes, activation = tf.keras.activations.softmax)(results);
+  results = tf.keras.layers.Dense(1000, activation = tf.keras.activations.softmax)(results);
   return tf.keras.Model(inputs = inputs, outputs = results);
 
 if __name__ == "__main__":
