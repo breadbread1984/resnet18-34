@@ -45,8 +45,8 @@ class ImageNet(object):
     aspect_ratio = tf.math.exp(tf.random.uniform(minval = tf.math.log(0.75), maxval = tf.math.log(1.33), shape = (10,))); # aspect_ratio.shape = (10,)
     sample_w = tf.cast(tf.math.sqrt(target_area * aspect_ratio), dtype = tf.int32); # w.shape = (10,)
     sample_h = tf.cast(tf.math.sqrt(target_area / aspect_ratio), dtype = tf.int32); # h.shape = (10,)
-    sample_x = tf.random.uniform(minval = tf.zeros_like(sample_w), maxval = tf.math.maximum(0, width - sample_w + 1), shape = (10,), dtype = tf.int32); # sample_x.shape = (10,)
-    sample_y = tf.random.uniform(minval = tf.zeros_like(sample_h), maxval = tf.math.maximum(0, height - sample_h + 1), shape = (10,), dtype = tf.int32); # sample_y.shape = (10,)
+    sample_x = tf.random.uniform(minval = tf.zeros_like(sample_w, dtype = tf.int32), maxval = tf.math.maximum(0, width - sample_w + 1), shape = (10,), dtype = tf.int32); # sample_x.shape = (10,)
+    sample_y = tf.random.uniform(minval = tf.zeros_like(sample_h, dtype = tf.int32), maxval = tf.math.maximum(0, height - sample_h + 1), shape = (10,), dtype = tf.int32); # sample_y.shape = (10,)
     # fallback (center) crop size
     fallback_w = tf.where(
       tf.math.less(width / height, 0.75),
