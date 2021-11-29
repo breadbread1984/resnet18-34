@@ -40,7 +40,7 @@ class ImageNet(object):
     height = tf.shape(img)[0];
     width = tf.shape(img)[1];
     # sample crop size
-    area = height * width;
+    area = tf.cast(height * width, dtype = tf.float32);
     target_area = tf.random.uniform(minval = 0.08, maxval = 1., shape = (10,)) * area; # targt_area.shape = (10,)
     aspect_ratio = tf.math.exp(tf.random.uniform(minval = tf.math.log(0.75), maxval = tf.math.log(1.33), shape = (10,))); # aspect_ratio.shape = (10,)
     sample_w = tf.cast(tf.math.sqrt(target_area * aspect_ratio), dtype = tf.int32); # w.shape = (10,)
