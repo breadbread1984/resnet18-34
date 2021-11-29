@@ -37,7 +37,8 @@ class ImageNet(object):
         yield img, label;
     return gen;
   def train_parse_function(self, img, label):
-    height, width, _ = tf.shape(img);
+    height = tf.shape(img)[0];
+    width = tf.shape(img)[1];
     # sample crop size
     area = height * width;
     target_area = tf.random.uniform(minval = 0.08, maxval = 1., shape = (10,)) * area; # targt_area.shape = (10,)
