@@ -66,13 +66,27 @@ class ImageNet(object):
     # concat crop size
     w = tf.concat([sample_w, fallback_w], axis = 0); # w.shape = (11,)
     h = tf.concat([sample_h, fallback_h], axis = 0); # h.shape = (11,)
+    x = tf.concat([sample_x, fallback_x], axis = 0); # x.shape = (11,)
+    y = tf.concat([sample_y, fallback_y], axis = 0); # y.shape = (11,)
     ok = tf.math.logical_and(
         tf.math.logical_and(tf.math.greater(w,0), tf.math.less_equal(w,width)),
         tf.math.logical_and(tf.math.greater(h,0), tf.math.less_equal(h,height))
       ); # ok.shape = (10,)
-    
+    box = tf.stack([y / height, x / width, (y + h) / height, (x + w) / width], axis = -1); # box.shape = (11, 4)
+    filtered_box = tf.boolean_mask(box, ok); # filtered_box.shape = (box_num, 4)
+    bbox = filtered_box[:1,...]; # bbox.shap = (1, 4)
+    cropped = tf.image.crop_and_resize(tf.expand_dims(img, axis = 0), bbox, tf.zeros((1,), dtype = tf.int32), [224,224], 'bilinear');
+    flipped = tf.image.random_flip_left_right(cropped);
+    sample = tf.squeeze(flipped, axis = 0) / 255.; # sample.shape = (1, 224, 224, 3)
+    sample = (sample - tf.constant([0.485, 0.456, 0.406])) / tf.constant([0.229, 0.224, 0.225]); # sample.shap = (224, 224, 3)
+    return sample, label;
   def test_parse_function(self, img, label):
-    
+    img = tf.expand_dims(img, axis = 0); # sample.shape = (1, height, width, 3)
+    img = tf.image.resize(img, (256, 256)); # sample.shape = (1, 256, 256, 3)
+    img = tf.image.central_crop(img, 0.875); # sample.shape = (1, 224, 224, 3)
+    sample = tf.squeeze(img, axis = 0) / 255.; # sample.shape = (224, 224, 3)
+    sample = (sample - tf.constant([0.485, 0.456, 0.406])) / tf.constant([0.229, 0.224, 0.225]); # sample.shap = (224, 224, 3)
+    return sample, label;
   def load_datasets(self,):
     trainset = tf.data.Dataset.from_generator(self.data_generator(True), (tf.float32, tf.int32), (tf.TensorShape([None, None, 3]), tf.TensorShape([]))).map(self.train_parse_function);
     testset = tf.data.Dataset.from_generator(self.data_generator(False), (tf.float32, tf.int32), (tf.TensorShape([None, None, 3]), tf.TensorShape([]))).map(self.test_parse_function);
@@ -80,3 +94,9 @@ class ImageNet(object):
 
 if __name__ == "__main__":
   imagenet = ImageNet('/home/devdata/dataset/imagenet_raw');
+  trainset, testset = imagenet.load_datasets();
+  for image, label in trainset:
+    image = 255. * (image * tf.constant([0.229, 0.224, 0.225]) + tf.constant([0.485, 0.456, 0.406]));
+    image = image.numpy().astype(np.uint8);
+    cv2.imshow('sample', image);
+    cv2.waitKey();
