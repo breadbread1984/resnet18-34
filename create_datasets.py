@@ -38,11 +38,34 @@ class ImageNet(object):
     return gen;
   def train_parse_function(self, img, label):
     height, width, _ = img.shape;
+    # sample crop size
     area = height * width;
     target_area = tf.random.uniform(minval = 0.08, maxval = 1., shape = (10,)) * area; # targt_area.shape = (10,)
     aspect_ratio = tf.math.exp(tf.random.uniform(minval = tf.math.log(0.75), maxval = tf.math.log(1.33), shape = (10,))); # aspect_ratio.shape = (10,)
-    w = tf.cast(tf.math.sqrt(target_area * aspect_ratio), dtype = tf.int32); # w.shape = (10,)
-    h = tf.cast(tf.math.sqrt(target_area / aspect_ratio), dtype = tf.int32); # h.shape = (10,)
+    sample_w = tf.cast(tf.math.sqrt(target_area * aspect_ratio), dtype = tf.int32); # w.shape = (10,)
+    sample_h = tf.cast(tf.math.sqrt(target_area / aspect_ratio), dtype = tf.int32); # h.shape = (10,)
+    sample_x = tf.random.uniform(minval = 0, maxval = tf.math.maximum(0, height - sample_h + 1), shape = (), dtype = tf.int32); # sample_x.shape = (10,)
+    sample_y = tf.random.uniform(minval = 0, maxval = tf.math.maximum(0, width - sample_w + 1), shape = (), dtype = tf.int32); # sample_y.shape = (10,)
+    # fallback (center) crop size
+    fallback_w = tf.where(
+      tf.math.less(width / height, 0.75),
+      width, 
+      tf.where(
+        tf.math.greater(width / height, 1.33),
+        tf.cast(height * 1.33, dtype = tf.int32),
+        width));
+    fallback_h = tf.where(
+      tf.math.less(width / height, 0.75),
+      tf.cast(width / 0.75, dtype = tf.int32),
+      tf.where(
+        tf.math.greater(width / height, 1.33),
+        height,
+        height));
+    fallback_x = (height - fallback_h) // 2;
+    fallback_y = (width - fallback_w) // 2;
+    # concat crop size
+    w = tf.concat([sample_w, fallback_w], axis = 0); # w.shape = (11,)
+    h = tf.concat([sample_h, fallback_h], axis = 0); # h.shape = (11,)
     ok = tf.math.logical_and(
         tf.math.logical_and(tf.math.greater(w,0), tf.math.less_equal(w,width)),
         tf.math.logical_and(tf.math.greater(h,0), tf.math.less_equal(h,height))
