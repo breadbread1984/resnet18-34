@@ -33,7 +33,7 @@ class ImageNet(object):
         img_path, label = sample;
         img = cv2.imread(img_path)[...,::-1]; # convert BRG to RGB
         img = img.astype(np.float32);
-        label = label.astype(np.int32);
+        label = label;
         yield img, label;
     return gen;
   def train_parse_function(self, img, label):
