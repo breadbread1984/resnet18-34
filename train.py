@@ -32,7 +32,7 @@ def main(unused_argv):
     model = ImageNetRN18() if FLAGS.model == 'resnet18' else ImageNetRN34();
     optimizer = tf.keras.optimizers.SGD(
       tf.keras.optimizers.schedules.ExponentialDecay(FLAGS.lr, decay_steps = FLAGS.decay_epochs * 1281167 / FLAGS.batch_size, decay_rate = FLAGS.decay_rate), 
-      momemtum = FLAGS.momentum);
+      momentum = FLAGS.momentum);
     model.compile(optimizer = optimizer,
                   loss = [tf.keras.losses.SparseCategoricalCrossentropy(name = 'ce_loss')],
                   metrics = [tf.keras.metrics.SparseCategoricalAccuracy(name = 'acc')]);
