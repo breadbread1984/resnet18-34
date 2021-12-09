@@ -1,4 +1,4 @@
-# this repository implement pretrain code for ResNet18 and ResNet34 which are missing from tf.keras.applications.
+# this repository is the implement of pretrain code for ResNet18 and ResNet34 which are missing from tf.keras.applications.
 
 ## prepare dataset
 
