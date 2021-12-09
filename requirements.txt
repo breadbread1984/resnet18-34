@@ -1,0 +1,6 @@
+numpy
+absl-py
+opencv-python
+tensorflow
+tensorflow-addons
+
