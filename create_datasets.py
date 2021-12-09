@@ -89,8 +89,8 @@ class ImageNet(object):
     sample = (sample - tf.constant([0.485, 0.456, 0.406])) / tf.constant([0.229, 0.224, 0.225]); # sample.shap = (224, 224, 3)
     return sample, label;
   def load_datasets(self,):
-    trainset = tf.data.Dataset.from_generator(self.data_generator(True), (tf.float32, tf.int32), (tf.TensorShape([None, None, 3]), tf.TensorShape([]))).map(self.train_parse_function);
-    testset = tf.data.Dataset.from_generator(self.data_generator(False), (tf.float32, tf.int32), (tf.TensorShape([None, None, 3]), tf.TensorShape([]))).map(self.test_parse_function);
+    trainset = tf.data.Dataset.from_generator(self.data_generator(True), (tf.float32, tf.int32), (tf.TensorShape([None, None, 3]), tf.TensorShape([]))).map(self.train_parse_function, num_parallel_calls = tf.data.AUTOTUNE);
+    testset = tf.data.Dataset.from_generator(self.data_generator(False), (tf.float32, tf.int32), (tf.TensorShape([None, None, 3]), tf.TensorShape([]))).map(self.test_parse_function, num_parallel_calls = tf.data.AUTOTUNE);
     return trainset, testset;
 
 if __name__ == "__main__":
