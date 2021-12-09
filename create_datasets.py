@@ -50,18 +50,18 @@ class ImageNet(object):
     # fallback (center) crop size
     fallback_w = tf.where(
       tf.math.less(width / height, 0.75),
-      width, 
+      width, # if width < 0.75 * height
       tf.where(
         tf.math.greater(width / height, 1.33),
-        tf.math.round(height * 1.33),
-        width));
+        tf.math.round(height * 1.33), # if width > 1.33 * height
+        width)); # if 0.75 * height < width < 1.33 * height
     fallback_h = tf.where(
       tf.math.less(width / height, 0.75),
-      tf.math.round(width / 0.75),
+      tf.math.round(width / 0.75), # if width < 0.75 * height
       tf.where(
         tf.math.greater(width / height, 1.33),
-        height,
-        height));
+        height, # if width > 1.33 * height
+        height)); # if 0.75 * height < width < 1.33 * height
     fallback_x = (height - fallback_h) // 2;
     fallback_y = (width - fallback_w) // 2;
     # concat crop size
