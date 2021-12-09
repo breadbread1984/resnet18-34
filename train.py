@@ -47,7 +47,7 @@ def main(unused_argv):
     tf.keras.callbacks.TensorBoard(log_dir = FLAGS.checkpoint),
     tf.keras.callbacks.ModelCheckpoint(filepath = join(FLAGS.checkpoint, 'ckpt'), save_freq = 1000),
   ];
-  model.fit(trainst, epochs = FLAGS.epochs, validation_data = testset, callbacks = callbacks);
+  model.fit(trainset, epochs = FLAGS.epochs, validation_data = testset, callbacks = callbacks);
 
 if __name__ == "__main__":
   app.run(main);
