@@ -9,7 +9,7 @@ from create_datasets import ImageNet;
 
 FLAGS = flags.FLAGS;
 flags.DEFINE_integer('batch_size', default = 256, help = 'batch size');
-flags.DEFINE_integer('decay_epoch', default = 30, help = 'how many epochs for each decay');
+flags.DEFINE_integer('decay_epochs', default = 30, help = 'how many epochs for each decay');
 flags.DEFINE_float('decay_rate', default = 0.1, help = 'decay rate');
 flags.DEFINE_float('lr', default = 0.1, help = 'learning rate');
 flags.DEFINE_integer('epochs', default = 90, help = 'epochs');
