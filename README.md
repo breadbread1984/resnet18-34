@@ -9,7 +9,7 @@ download ImageNet and unzip it.
 train with the following command
 
 ```shell
-python3 train.py --batch_size=<batch size> --imagenet_path=<path/to/imagenet> --model=(resnet18|resnet34)
+python3 train.py --batch_size=<batch size> --imagenet_path=<path/to/imagenet> [--use_tfrecord] --model=(resnet18|resnet34)
 ```
 
 ## save model
