@@ -16,6 +16,7 @@ flags.DEFINE_integer('epochs', default = 90, help = 'epochs');
 flags.DEFINE_float('momentum', default = 0.9, help = 'momentum');
 flags.DEFINE_enum('model', default = 'resnet18', enum_values = ['resnet18', 'resnet34'], help = 'which model to train');
 flags.DEFINE_string('imagenet_path', default = None, help = 'path to raw imagenet directory');
+flags.DEFINE_boolean('use_tfrecord', default = False, help = 'whether to use dataset in tfrecord format');
 flags.DEFINE_string('checkpoint', default = 'checkpoints', help = 'path to checkpoint');
 flags.DEFINE_boolean('save_model', default = False, help = 'whether to save model from checkpoint');
 
@@ -37,7 +38,7 @@ def main(unused_argv):
                   loss = [tf.keras.losses.SparseCategoricalCrossentropy(name = 'ce_loss')],
                   metrics = [tf.keras.metrics.SparseCategoricalAccuracy(name = 'acc')]);
   # create dataset
-  imagenet = ImageNet(FLAGS.imagenet_path);
+  imagenet = ImageNet(FLAGS.imagenet_path, FLAGS.use_tfrecord);
   options = tf.data.Options();
   options.autotune.enabled = True;
   trainset, testset = imagenet.load_datasets();
