@@ -9,7 +9,7 @@ import cv2;
 import tensorflow as tf;
 
 class ImageNet(object):
-  def __init__(self, root_dir, use_tfrecord == False):
+  def __init__(self, root_dir, use_tfrecord = False):
     self.root_dir = root_dir;
     self.use_tfrecord = use_tfrecord;
     if self.use_tfrecord == False:
