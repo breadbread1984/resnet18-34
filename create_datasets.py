@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+from re import search;
 from os import listdir;
 from os.path import join, exists, splitext;
 from random import shuffle;
@@ -8,24 +9,48 @@ import cv2;
 import tensorflow as tf;
 
 class ImageNet(object):
-  def __init__(self, root_dir):
+  def __init__(self, root_dir, use_tfrecord == False):
     self.root_dir = root_dir;
-    self.label2cls = dict();
-    self.train_list = list();
-    self.eval_list = list();
-    for cls in listdir(join(root_dir, 'train')):
-      if cls not in self.label2cls:
-        self.label2cls[cls] = len(self.label2cls);
-      for img in listdir(join(root_dir, 'train', cls)):
-        if splitext(img)[1].lower() == '.jpeg':
-          self.train_list.append((join(root_dir, 'train', cls, img), self.label2cls[cls]));
-    for cls in listdir(join(root_dir, 'val')):
-      assert cls in self.label2cls;
-      for img in listdir(join(root_dir, 'val', cls)):
-        if splitext(img)[1].lower() == '.jpeg':
-          self.eval_list.append((join(root_dir, 'val', cls, img), self.label2cls[cls]));
-    shuffle(self.train_list);
-    shuffle(self.eval_list);
+    self.use_tfrecord = use_tfrecord;
+    if self.use_tfrecord == False:
+      self.label2cls = dict();
+      self.train_list = list();
+      self.eval_list = list();
+      for cls in listdir(join(root_dir, 'train')):
+        if cls not in self.label2cls:
+          self.label2cls[cls] = len(self.label2cls);
+        for img in listdir(join(root_dir, 'train', cls)):
+          if splitext(img)[1].lower() == '.jpeg':
+            self.train_list.append((join(root_dir, 'train', cls, img), self.label2cls[cls]));
+      for cls in listdir(join(root_dir, 'val')):
+        assert cls in self.label2cls;
+        for img in listdir(join(root_dir, 'val', cls)):
+          if splitext(img)[1].lower() == '.jpeg':
+            self.eval_list.append((join(root_dir, 'val', cls, img), self.label2cls[cls]));
+      shuffle(self.train_list);
+      shuffle(self.eval_list);
+  def load_tfrecord(self, trainset = True):
+    subdir = 'train' if trainset == True else 'validation';
+    filenames = [join(self.root_dir, subdir, filename) for filename in listdir(join(self.root_dir, subdir)) if search('-of-', filename)];
+    filenames = sorted(filenames);
+    dataset = tf.data.Dataset.from_tensor_slices(filenames);
+    dataset = dataset.shuffle(buffer_size = len(filenames));
+    dataset = dataset.flat_map(tf.data.TFRecordDataset);
+    return dataset;
+  def tfrecord_parse_function(self, serialized_example):
+    feature = tf.io.parse_single_example(
+      serialized_example,
+      features = {
+        'image/encoded': tf.FixedLenFeature((), dtype=tf.string, default_value=''),
+        'image/class/label': tf.FixedLenFeature((), dtype=tf.int64, default_value=-1),
+        'image/class/text': tf.FixedLenFeature((), dtype=tf.string, default_value=''),
+      }
+    );
+    image = tf.io.decode_jpeg(feature['image/encoded']);
+    image = tf.cast(image, dtype = tf.float32);
+    label = tf.cast(feature['image/class/label'], dtype=tf.int32) - 1;
+    tf.debugging.Assert(tf.math.logical_and(tf.math.greater_equal(label, 0), tf.math.less(label, 1000)), [label]);
+    return image, label;
   def data_generator(self, trainset = True):
     dataset = self.train_list if trainset == True else self.eval_list;
     def gen():
@@ -89,15 +114,33 @@ class ImageNet(object):
     sample = (sample - tf.constant([0.485, 0.456, 0.406])) / tf.constant([0.229, 0.224, 0.225]); # sample.shap = (224, 224, 3)
     return sample, label;
   def load_datasets(self,):
-    trainset = tf.data.Dataset.from_generator(self.data_generator(True), (tf.float32, tf.int32), (tf.TensorShape([None, None, 3]), tf.TensorShape([]))).map(self.train_parse_function, num_parallel_calls = tf.data.AUTOTUNE);
-    testset = tf.data.Dataset.from_generator(self.data_generator(False), (tf.float32, tf.int32), (tf.TensorShape([None, None, 3]), tf.TensorShape([]))).map(self.test_parse_function, num_parallel_calls = tf.data.AUTOTUNE);
+    if self.use_tfrecord:
+      trainset = self.load_tfrecord(True).map(self.tfrecord_parse_function, num_parallel_calls = tf.data.AUTOTUNE).map(self.train_parse_function, num_parallel_calls = tf.data.AUTOTUNE);
+      testset = self.load_tfrecord(False).map(self.tfrecord_parse_function, num_parallel_calls = tf.data.AUTOTUNE).map(self.test_parse_function, num_parallel_calls = tf.data.AUTOTUNE);
+    else:
+      trainset = tf.data.Dataset.from_generator(self.data_generator(True), (tf.float32, tf.int32), (tf.TensorShape([None, None, 3]), tf.TensorShape([]))).map(self.train_parse_function, num_parallel_calls = tf.data.AUTOTUNE);
+      testset = tf.data.Dataset.from_generator(self.data_generator(False), (tf.float32, tf.int32), (tf.TensorShape([None, None, 3]), tf.TensorShape([]))).map(self.test_parse_function, num_parallel_calls = tf.data.AUTOTUNE);
     return trainset, testset;
 
 if __name__ == "__main__":
-  imagenet = ImageNet('/home/devdata/dataset/imagenet_raw');
+  imagenet = ImageNet('/home/devdata/dataset/imagenet_raw', use_tfrecord = False);
   trainset, testset = imagenet.load_datasets();
+  count = 10;
   for image, label in trainset:
     image = 255. * (image * tf.constant([0.229, 0.224, 0.225]) + tf.constant([0.485, 0.456, 0.406]));
     image = image.numpy().astype(np.uint8);
     cv2.imshow('sample', image);
     cv2.waitKey();
+    count -= 1;
+    if count <= 0: break;
+  imagenet = ImageNet('/home/devdata/dataset/imagenet', use_tfrecord = True);
+  trainset, testset = imagenet.load_datasets();
+  count = 10;
+  for image, label in trainset:
+    image = 255. * (image * tf.constant([0.229, 0.224, 0.225]) + tf.constant([0.485, 0.456, 0.406]));
+    image = image.numpy().astype(np.uint8);
+    cv2.imshow('sample', image);
+    cv2.waitKey();
+    count -= 1;
+    if count <= 0: break;
+  
