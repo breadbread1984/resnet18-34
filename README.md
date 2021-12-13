@@ -19,3 +19,13 @@ save model from checkpoint with the following command, the saved model will be l
 ```shell
 python3 train.py --model=(resnet18|resnet34) --save_model
 ```
+
+## pretrained model
+
+the pretrained model of ResNet18 and ResNet34 are included in repository. the performance of the pretrained model is listed in the following table.
+
+| model | train accuracy | eval accuracy |
+| ----- | -------------- | ------------- |
+| resnet18 | 0.6717 |  0.6447 |
+
+
