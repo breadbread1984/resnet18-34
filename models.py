@@ -12,7 +12,7 @@ def ResnetBlock(in_channels, out_channels, down_sample = False):
   results = tf.keras.layers.Conv2D(out_channels, kernel_size = (3,3), strides = (2,2) if down_sample else (1,1), padding = 'same', kernel_initializer = tf.keras.initializers.HeNormal())(inputs);
   results = tf.keras.layers.BatchNormalization()(results);
   results = tf.keras.layers.ReLU()(results);
-  results = tf.keras.layers.Conv2D(out_channels, kernel_size = (3,3), strides = (1,1) if down_sample else (1,1), padding = 'same', kernel_initializer = tf.keras.initializers.HeNormal())(results);
+  results = tf.keras.layers.Conv2D(out_channels, kernel_size = (3,3), strides = (1,1), padding = 'same', kernel_initializer = tf.keras.initializers.HeNormal())(results);
   results = tf.keras.layers.BatchNormalization()(results);
   results = tf.keras.layers.Add()([results, shortcut]);
   results = tf.keras.layers.ReLU()(results);
