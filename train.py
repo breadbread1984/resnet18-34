@@ -27,7 +27,9 @@ def main(unused_argv):
     optimizer = model.optimizer;
     if FLAGS.save_model:
       if not exists('models'): mkdir('models');
+      model.save(join('models', '%s_includetop.h5' % FLAGS.model));
       model.get_layer(FLAGS.model).save(join('models', '%s.h5' % FLAGS.model));
+      model.get_layer(FLAGS.model).save_weights(join('models', '%s_weights.h5' % FLAGS.model));
       exit();
   else:
     model = ImageNetRN18() if FLAGS.model == 'resnet18' else ImageNetRN34();
