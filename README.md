@@ -26,6 +26,6 @@ the pretrained model of ResNet18 and ResNet34 are included in repository. the pe
 
 | model | train accuracy | eval accuracy |
 | ----- | -------------- | ------------- |
-| resnet18 | 0.6717 |  0.6447 |
-
+| [resnet18](models/resnet18.h5) | 0.6717 |  0.6447 |
+| [resnet34](models/resnet34.h5) | 0.7236 |  0.6712 |
 
