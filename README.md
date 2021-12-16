@@ -9,7 +9,7 @@ download ImageNet and unzip it.
 train with the following command
 
 ```shell
-python3 train.py --batch_size=<batch size> --imagenet_path=<path/to/imagenet> [--use_tfrecord] --model=(resnet18|resnet34)
+python3 train.py --batch_size=<batch size> --imagenet_path=<path/to/imagenet> [--use_tfrecord] --model=(resnet18|resnet34|resnet50|resnet101|resnet152)
 ```
 
 ## save model
@@ -17,7 +17,7 @@ python3 train.py --batch_size=<batch size> --imagenet_path=<path/to/imagenet> [-
 save model from checkpoint with the following command, the saved model will be located under directory models.
 
 ```shell
-python3 train.py --model=(resnet18|resnet34) --save_model
+python3 train.py --model=(resnet18|resnet34|resnet50|resnet101|resnet152) --save_model
 ```
 
 ## pretrained model
