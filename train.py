@@ -14,7 +14,7 @@ flags.DEFINE_float('decay_rate', default = 0.1, help = 'decay rate');
 flags.DEFINE_float('lr', default = 0.1, help = 'learning rate');
 flags.DEFINE_integer('epochs', default = 90, help = 'epochs');
 flags.DEFINE_float('momentum', default = 0.9, help = 'momentum');
-flags.DEFINE_enum('model', default = 'resnet18', enum_values = ['resnet18', 'resnet34'], help = 'which model to train');
+flags.DEFINE_enum('model', default = 'resnet18', enum_values = ['resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152'], help = 'which model to train');
 flags.DEFINE_string('imagenet_path', default = None, help = 'path to imagenet directory');
 flags.DEFINE_boolean('use_tfrecord', default = False, help = 'whether to use dataset in tfrecord format');
 flags.DEFINE_string('checkpoint', default = 'checkpoints', help = 'path to checkpoint');
@@ -32,7 +32,18 @@ def main(unused_argv):
       model.get_layer(FLAGS.model).save_weights(join('models', '%s_weights.h5' % FLAGS.model));
       exit();
   else:
-    model = ImageNetRN18() if FLAGS.model == 'resnet18' else ImageNetRN34();
+    if FLAGS.model == 'resnet18':
+      model = ImageNetRN18();
+    elif FLAGS.model == 'resnet34':
+      model = ImageNetRN34();
+    elif FLAGS.model == 'resnet50':
+      model = tf.keras.applications.resnet50.ResNet50(weights = None, include_top = True);
+    elif FLAGS.model == 'resnet101':
+      model = tf.keras.applications.resnet.ResNet101(weights = None, include_top = True);
+    elif FLAGS.model == 'resnet152':
+      model = tf.keras.applications.resnet.ResNet152(weights = None, include_top = True);
+    else:
+      raise Exception('invalid model!');
     optimizer = tf.keras.optimizers.SGD(
       tf.keras.optimizers.schedules.ExponentialDecay(FLAGS.lr, decay_steps = FLAGS.decay_epochs * 1281167 / FLAGS.batch_size, decay_rate = FLAGS.decay_rate), 
       momentum = FLAGS.momentum);
