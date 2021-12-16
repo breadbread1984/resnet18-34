@@ -27,9 +27,15 @@ def main(unused_argv):
     optimizer = model.optimizer;
     if FLAGS.save_model:
       if not exists('models'): mkdir('models');
-      model.save(join('models', '%s_includetop.h5' % FLAGS.model));
-      model.get_layer(FLAGS.model).save(join('models', '%s.h5' % FLAGS.model));
-      model.get_layer(FLAGS.model).save_weights(join('models', '%s_weights.h5' % FLAGS.model));
+      if FLAGS.model in ['resnet18', 'resnet34']:
+        model.save(join('models', '%s_includetop.h5' % FLAGS.model));
+        model.get_layer(FLAGS.model).save(join('models', '%s.h5' % FLAGS.model));
+        model.get_layer(FLAGS.model).save_weights(join('models', '%s_weights.h5' % FLAGS.model));
+      else:
+        model.save(join('models', '%s_includetop.h5' % FLAGS.model));
+        resnet = tf.keras.Model(inputs = model.input, outputs = model.get_layer('avg_pool').output);
+        resnet.save(join('models', '%s.h5' % FLAGS.model));
+        resnet.save_weights(join('models', '%s_weights.h5' % FLAGS.model));
       exit();
   else:
     if FLAGS.model == 'resnet18':
