@@ -59,7 +59,7 @@ def main(unused_argv):
     for inputs, labels in trainset:
       with tf.GradientTape() as tape:
         preds = model(inputs);
-        loss = tf.keras.losses.SparseCategoricalCrossentropy()(labels, inputs);
+        loss = tf.keras.losses.SparseCategoricalCrossentropy()(labels, preds);
       grads = tape.gradient(loss, model.trainable_variables);
       optimizer.apply_gradients(zip(grads, model.trainable_variables));
       train_ce.update_state(loss);
