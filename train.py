@@ -58,16 +58,15 @@ def main(unused_argv):
                   metrics = [tf.keras.metrics.SparseCategoricalAccuracy(name = 'acc')]);
   # create dataset
   imagenet = ImageNet(FLAGS.imagenet_path, FLAGS.use_tfrecord);
-  options = tf.data.Options();
-  options.autotune.enabled = True;
   trainset, testset = imagenet.load_datasets();
-  trainset = trainset.with_options(options).shuffle(FLAGS.batch_size).batch(FLAGS.batch_size);
-  testset = testset.with_options(options).shuffle(FLAGS.batch_size).batch(FLAGS.batch_size);
+  trainset = trainset.shuffle(FLAGS.batch_size).batch(FLAGS.batch_size);
+  testset = testset.shuffle(FLAGS.batch_size).batch(FLAGS.batch_size);
   callbacks = [
     tf.keras.callbacks.TensorBoard(log_dir = FLAGS.checkpoint),
     tf.keras.callbacks.ModelCheckpoint(filepath = join(FLAGS.checkpoint, 'ckpt'), save_freq = 1000),
   ];
-  model.fit(trainset, epochs = FLAGS.epochs, validation_data = testset, callbacks = callbacks);
+  # NOTE: give steps_per_epoch because tf1.x can't infer the size of large dataset
+  model.fit(trainset, steps_per_epoch = ceil(1281167 / FLAGS.batch_size), epochs = FLAGS.epochs, validation_steps = ceil(50000 / FLAGS.batch_size), validation_data = testset, callbacks = callbacks);
 
 if __name__ == "__main__":
   app.run(main);
