@@ -51,7 +51,7 @@ def main(unused_argv):
   checkpoint = tf.train.Checkpoint(model = model, optimizer = optimizer);
   checkpoint.restore(tf.train.latest_checkpoint('checkpoints'));
   # 5) create log
-  log = tf.summary.create_file_writr('checkpoints');
+  log = tf.summary.create_file_writer('checkpoints');
   # 6) metrics
   train_ce = tf.keras.metrics.Mean();
   eval_acc = tf.keras.metrics.SparseCategoricalAccuracy();
