@@ -22,52 +22,57 @@ flags.DEFINE_boolean('save_model', default = False, help = 'whether to save mode
 
 def main(unused_argv):
 
-  if exists(join(FLAGS.checkpoint, 'ckpt')):
-    model = tf.keras.models.load_model(join(FLAGS.checkpoint, 'ckpt'), custom_objects = {'tf': tf}, compile = True);
-    optimizer = model.optimizer;
-    if FLAGS.save_model:
-      if not exists('models'): mkdir('models');
-      if FLAGS.model in ['resnet18', 'resnet34']:
-        model.save(join('models', '%s_includetop.h5' % FLAGS.model));
-        model.get_layer(FLAGS.model).save(join('models', '%s.h5' % FLAGS.model));
-        model.get_layer(FLAGS.model).save_weights(join('models', '%s_weights.h5' % FLAGS.model));
-      else:
-        model.save(join('models', '%s_includetop.h5' % FLAGS.model));
-        resnet = tf.keras.Model(inputs = model.input, outputs = model.get_layer('avg_pool').output);
-        resnet.save(join('models', '%s.h5' % FLAGS.model));
-        resnet.save_weights(join('models', '%s_weights.h5' % FLAGS.model));
-      exit();
+  # 1) create model
+  if FLAGS.model == 'resnet18':
+    model = ImageNetRN18();
+  elif FLAGS.model == 'resnet34':
+    model = ImageNetRN34();
+  elif FLAGS.model == 'resnet50':
+    model = tf.keras.applications.resnet50.ResNet50(weights = None, include_top = True);
+  elif FLAGS.model == 'resnet101':
+    model = tf.keras.applications.resnet.ResNet101(weights = None, include_top = True);
+  elif FLAGS.model == 'resnet152':
+    model = tf.keras.applications.resnet.ResNet152(weights = None, include_top = True);
   else:
-    if FLAGS.model == 'resnet18':
-      model = ImageNetRN18();
-    elif FLAGS.model == 'resnet34':
-      model = ImageNetRN34();
-    elif FLAGS.model == 'resnet50':
-      model = tf.keras.applications.resnet50.ResNet50(weights = None, include_top = True);
-    elif FLAGS.model == 'resnet101':
-      model = tf.keras.applications.resnet.ResNet101(weights = None, include_top = True);
-    elif FLAGS.model == 'resnet152':
-      model = tf.keras.applications.resnet.ResNet152(weights = None, include_top = True);
-    else:
-      raise Exception('invalid model!');
-    optimizer = tf.keras.optimizers.SGD(
-      tf.keras.optimizers.schedules.ExponentialDecay(FLAGS.lr, decay_steps = FLAGS.decay_epochs * 1281167 / FLAGS.batch_size, decay_rate = FLAGS.decay_rate), 
-      momentum = FLAGS.momentum);
-    model.compile(optimizer = optimizer,
-                  loss = [tf.keras.losses.SparseCategoricalCrossentropy(name = 'ce_loss')],
-                  metrics = [tf.keras.metrics.SparseCategoricalAccuracy(name = 'acc')]);
-  # create dataset
+    raise Exception('invalid model!');
+  # 2) create optimizer
+  optimizer = tf.keras.optimizers.SGD(
+    tf.keras.optimizers.schedules.ExponentialDecay(FLAGS.lr, decay_steps = FLAGS.decay_epochs * 1281167 / FLAGS.batch_size, decay_rate = FLAGS.decay_rate), 
+    momentum = FLAGS.momentum);
+  # 3) create dataset
   imagenet = ImageNet(FLAGS.imagenet_path, FLAGS.use_tfrecord);
+  trainset, testset = imagenet.load_datasets();
   options = tf.data.Options();
   options.autotune.enabled = True;
-  trainset, testset = imagenet.load_datasets();
   trainset = trainset.with_options(options).shuffle(FLAGS.batch_size).batch(FLAGS.batch_size);
   testset = testset.with_options(options).shuffle(FLAGS.batch_size).batch(FLAGS.batch_size);
-  callbacks = [
-    tf.keras.callbacks.TensorBoard(log_dir = FLAGS.checkpoint),
-    tf.keras.callbacks.ModelCheckpoint(filepath = join(FLAGS.checkpoint, 'ckpt'), save_freq = 1000),
-  ];
-  model.fit(trainset, epochs = FLAGS.epochs, validation_data = testset, callbacks = callbacks);
+  # 4) restore from existing checkpoint
+  if False == exists('checkpoints'): mkdir('checkpoints');
+  checkpoint = tf.train.Checkpoint(model = model, optimizer = optimizer);
+  checkpoint.restore(tf.train.latest_checkpoint('checkpoints'));
+  # 5) create log
+  log = tf.summary.create_file_writr('checkpoints');
+  # 6) metrics
+  train_ce = tf.keras.metrics.Mean();
+  eval_acc = tf.keras.metrics.SparseCategoricalAccuracy();
+  for epoch in range(FLAGS.epochs):
+    for inputs, labels in trainset:
+      with tf.GradientTape() as tape:
+        preds = model(inputs);
+        loss = tf.keras.losses.SparseCategoricalCrossentropy()(labels, inputs);
+      grads = tape.gradient(loss, model.trainable_variables);
+      optimizer.apply_gradients(zip(grads, model.trainable_variables));
+      train_ce.update_state(loss);
+    for inputs, labels in testset:
+      preds = model(inputs);
+      eval_acc.update_state(labels, preds);
+    with log.as_default():
+      tf.summary.scalar('loss', train_ce.result(), step = optimizer.iterations);
+      tf.summary.scalar('accuracy', eval_acc.result(), step = optimizer.iterations);
+    train_ce.reset_states();
+    eval_acc.reset_states();
+    # save checkpoint
+    checkpoint.save(join('checkpoint', 'ckpt'));
 
 if __name__ == "__main__":
   app.run(main);
